@@ -1,0 +1,14 @@
+[boxes]
+192.168.56.15 ansible_ssh_port=22 ansible_user=vagrant ansible_ssh_pass=vagrant
+192.168.56.16 ansible_ssh_port=25 ansible_user=vagrant ansible_ssh_pass=vagrant
+
+[soufe1]
+192.168.56.15 ansible_ssh_port=22 ansible_user=vagrant ansible_ssh_pass=vagrant
+
+[soube2]
+192.168.56.16 ansible_ssh_port=25 ansible_user=vagrant ansible_ssh_pass=vagrant
+
+[all:vars]
+ansible_connection=ssh
+ansible_user=vagrant
+ansible_ssh_private_key_file='~/.vagrant.d/insecure_private_key'

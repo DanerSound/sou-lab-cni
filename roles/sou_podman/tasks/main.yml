@@ -1,0 +1,93 @@
+- name: installa podman
+  hosts: all
+  remote_user: andrecristhian
+  become: true
+  vars:
+    ansible_ssh_pass: vagrant
+  tasks:
+    - name: Update yum cache
+      yum:
+        update_cache: 'yes'
+    - name: Install Podman
+      shell: yum -y install podman
+
+- name: Install Haproxy using Podman
+  hosts: soufe1
+  remote_user: andrecristhian
+  become: true
+  vars:
+    ansible_ssh_pass: vagrant
+  tasks:
+    - name: install Haproxy on soufe1 with podman
+      podman_image:
+        name: 'docker.io/haproxytech/haproxy-alpine:2.7'
+
+    - name: Verifica la presenza del container haproxy
+      shell: podman inspect haproxy
+      register: container_inspect
+      ignore_errors: true
+
+    - name: Esegui il task se il container haproxy esiste
+      shell: podman stop haproxy
+      when: container_inspect.rc == 0
+      ignore_errors: true
+
+    - name: remove if already exist haproxy
+      shell: podman rm haproxy
+      ignore_errors: true
+      
+    - name: run Haproxy
+      shell: podman run -d --name haproxy -p 8080:80 docker.io/haproxytech/haproxy-alpine:2.7
+
+- name: Install grafana and Prometheus using Podman
+  hosts: soube2
+  remote_user: andrecristhian
+  become: true
+  vars:
+    ansible_ssh_pass: vagrant
+  tasks:
+    - name: pull image grafana
+      containers.podman.podman_image:
+        name: grafana/grafana
+        pull: true
+        tag: latest
+
+    - name: Verifica la presenza del container grafana
+      shell: podman inspect grafana
+      register: container_inspect
+      ignore_errors: true
+
+    - name: Esegui il task se il container esiste
+      shell: podman stop grafana
+      when: container_inspect.rc == 0
+      ignore_errors: true
+
+    - name: remove if already exist grafana
+      shell: podman rm grafana
+      ignore_errors: true
+      
+    - name: run grafana container
+      shell: podman run -d --name=grafana -p 3000:3000 docker.io/grafana/grafana:latest
+
+    - name: pull image Prometheus
+      containers.podman.podman_image:
+        name: bitnami/prometheus
+        pull: true
+        tag: latest
+
+    - name: Verifica la presenza del container bitnami/prometheus
+      shell: podman inspect prometheus
+      register: container_inspect
+      ignore_errors: true
+
+    - name: Esegui il task se il container esiste
+      shell: podman stop prometheus
+      when: container_inspect.rc == 0
+      ignore_errors: true
+
+    - name: remove if already exist prometheus
+      shell: podman rm prometheus
+      ignore_errors: true
+      
+    - name: run prometheus container
+      shell: podman run -d --name prometheus -p 9090:9090 bitnami/prometheus
