@@ -5,6 +5,7 @@ Vagrant.configure("2") do |config|
   config.vm.define "soufe1", primary: true do |hp|
     hp.vm.network :private_network, ip: "192.168.56.15"
     hp.vm.network "forwarded_port", guest: 2222, host: 2222
+    hp.vm.network "forwarded_port", guest: 80, host: 80
   end
 
   # create prometheus and grafana boxes

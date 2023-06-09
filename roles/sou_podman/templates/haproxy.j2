@@ -1,13 +1,31 @@
-frontend http8080
-	bind *:8443
+defaults
+  mode http
+  timeout client 10s
+  timeout connect 5s
+  timeout server 10s 
+  timeout http-request 10s
+
+frontend http80
+	bind *:80
+	acl grafana path_end -i /graf
+  	acl prometheus path_end -i /prom
+
+	use_backend prometheus_backend if prometheus
+	use_backend grafana_backend if grafana
+
 	timeout client 60s
 	mode http
-	default_backend allservers
 	
-	
-backend allservers
+backend grafana_backend
 	timeout connect 10s
 	timeout server 100s
+	balance roundrobin
 	mode http
 	server grafana 192.168.56.16:3000
+
+backend prometheus_backend
+	timeout connect 10s
+	timeout server 100s
+	balance roundrobin
+	mode http
 	server prometheus 192.168.56.16:9090
