@@ -1,5 +1,5 @@
-frontend haproxy
-	bind: 192.168.56.15:2222
+frontend http8080
+	bind *:8080
 	timeout client 60s
 	mode http
 	default_backend allservers
