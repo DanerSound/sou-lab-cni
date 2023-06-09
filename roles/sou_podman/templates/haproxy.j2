@@ -1,0 +1,13 @@
+frontend haproxy
+	bind: 192.168.56.15:2222
+	timeout client 60s
+	mode http
+	default_backend allservers
+	
+	
+backend allservers
+	timeout connect 10s
+	timeout server 100s
+	mode http
+	server grafana 192.168.56.16:3000
+	server prometheus 192.168.56.16:9090

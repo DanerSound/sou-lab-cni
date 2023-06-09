@@ -1,47 +1,59 @@
 - name: installa podman
   hosts: all
-  remote_user: andrecristhian
   become: true
   vars:
     ansible_ssh_pass: vagrant
   tasks:
+    - name: Disable SELinux
+      selinux:
+        state: disabled
     - name: Update yum cache
       yum:
         update_cache: 'yes'
     - name: Install Podman
-      shell: yum -y install podman
-
-- name: Install Haproxy using Podman
+      yum:
+        state: present
+        name: podman
+- name: Install Haproxy using Podman on Soufe1
   hosts: soufe1
-  remote_user: andrecristhian
   become: true
   vars:
     ansible_ssh_pass: vagrant
   tasks:
-    - name: install Haproxy on soufe1 with podman
+    - name: pull image haproxy
       podman_image:
         name: 'docker.io/haproxytech/haproxy-alpine:2.7'
-
-    - name: Verifica la presenza del container haproxy
-      shell: podman inspect haproxy
-      register: container_inspect
-      ignore_errors: true
-
-    - name: Esegui il task se il container haproxy esiste
+    - name: stop container if exist
       shell: podman stop haproxy
-      when: container_inspect.rc == 0
       ignore_errors: true
-
-    - name: remove if already exist haproxy
+    - name: remove container if exist
       shell: podman rm haproxy
       ignore_errors: true
-      
-    - name: run Haproxy
-      shell: podman run -d --name haproxy -p 8080:80 docker.io/haproxytech/haproxy-alpine:2.7
-
-- name: Install grafana and Prometheus using Podman
+    - name: Create haproxy config directory
+      ansible.builtin.file:
+        path: /containers_vols/haproxy
+        owner: vagrant
+        group: vagrant
+        state: directory
+        mode: '0664'
+    - name: update haproxy config
+      ansible.builtin.copy:
+        src: ../templates/haproxy.j2
+        dest: /containers_vols/haproxy/haproxy.cfg
+        owner: vagrant
+        group: vagrant
+        mode: '0664'
+    - name: Run haproxy
+      containers.podman.podman_container:
+        name: haproxy
+        image: 'docker.io/haproxytech/haproxy-alpine:2.7'
+        ports:
+          - '8080:80'
+        volumes:
+          - '/containers_vols/haproxy/:/usr/local/etc/haproxy:ro'
+        state: started
+- name: Install Grafana and Prometheus using Podman on Soube2
   hosts: soube2
-  remote_user: andrecristhian
   become: true
   vars:
     ansible_ssh_pass: vagrant
@@ -51,43 +63,26 @@
         name: grafana/grafana
         pull: true
         tag: latest
-
-    - name: Verifica la presenza del container grafana
-      shell: podman inspect grafana
-      register: container_inspect
-      ignore_errors: true
-
-    - name: Esegui il task se il container esiste
+    - name: stop container if exist
       shell: podman stop grafana
-      when: container_inspect.rc == 0
       ignore_errors: true
-
-    - name: remove if already exist grafana
+    - name: remove container if exist
       shell: podman rm grafana
       ignore_errors: true
-      
     - name: run grafana container
-      shell: podman run -d --name=grafana -p 3000:3000 docker.io/grafana/grafana:latest
-
+      shell: >-
+        podman run -d --name=grafana -p 3000:3000
+        docker.io/grafana/grafana:latest
     - name: pull image Prometheus
       containers.podman.podman_image:
         name: bitnami/prometheus
         pull: true
         tag: latest
-
-    - name: Verifica la presenza del container bitnami/prometheus
-      shell: podman inspect prometheus
-      register: container_inspect
-      ignore_errors: true
-
-    - name: Esegui il task se il container esiste
+    - name: stop container if exist
       shell: podman stop prometheus
-      when: container_inspect.rc == 0
       ignore_errors: true
-
-    - name: remove if already exist prometheus
+    - name: remove container if exist
       shell: podman rm prometheus
       ignore_errors: true
-      
     - name: run prometheus container
-      shell: podman run -d --name prometheus -p 9090:9090 bitnami/prometheus
+      shell: 'podman run -d --name prometheus -p 9090:9090 bitnami/prometheus'
