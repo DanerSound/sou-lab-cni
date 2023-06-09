@@ -1,5 +1,5 @@
 Vagrant.configure("2") do |config|
-  config.vm.box = "centos/7"
+  config.vm.box = "generic/centos8"
 
   # create haproxy box
   config.vm.define "soufe1", primary: true do |hp|
