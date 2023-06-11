@@ -51,7 +51,7 @@
         name: haproxy
         image: 'docker.io/haproxytech/haproxy-alpine:2.7'
         ports:
-          - '80:80'
+          - '8080:80'
         volumes:
           - '/containers_vols/haproxy/:/usr/local/etc/haproxy:ro'
         state: started
